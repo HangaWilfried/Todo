@@ -1,19 +1,19 @@
 <template>
   <header>
     <h1>
-      <p>Todo List </p>
+      <p>Todo List</p>
       <p>completed <span>{{countTask}}</span></p>
     </h1>
     <div>
-      <h5>we advise you to always start with the most important spots.</h5>
-      <template v-for="(priority, index) in priorities" :key="index">
-        <div class="remember">{{index}} - {{priority}}</div>
+      <h5>we advise you to always start with the most important spots</h5>
+      <template v-for="priority in priorities" :key="priority.index">
+        <div class="remember">{{priority.name}}</div>
       </template>
     </div>
     <form>
       <div class="form">
-        <input type="text" placeholder="add new task" v-model="task">
-        <button @click.prevent="addNewTask"><ion-icon name="arrow-forward-outline"></ion-icon></button>
+        <input type="text" placeholder="add new task" v-model="task.name">
+        <button @click.prevent="addNewTask(task)"><ion-icon name="arrow-forward-outline"></ion-icon></button>
       </div>
     </form>
   </header>
@@ -22,65 +22,86 @@
     <div v-for="(task, index) in tasks" :key="index" class="footer">
       <p @click="deleteTask(index)"><span>not longer to see</span> <span>x</span></p>
       <p><span>{{task.name}}</span> <span> added {{`${manageTime().day} ${manageTime().date} ${manageTime().month} ${manageTime().year}`}} at {{`${manageTime().hour} ${manageTime().minute}`}}</span></p>
-      <p><input type="checkbox"  @click="getPriority(index)">yes i must have priority over the other tasks</p>
+      <p><input type="checkbox" v-model="task.state" @click="getPriority(index)">yes i must have priority over the other tasks</p>
     </div>
   </main>
 </template>
 
 
 <script>
-import {reactive, computed, ref} from 'vue'
+import {reactive, computed} from 'vue'
 export default {
   name: 'App',
   setup(){
     const tasks = reactive([]);
-    const task = ref('')
-    const isChecked = ref(false)
+
+    const task = reactive({
+      id: Math.random(),
+      name: '',
+      state: false
+    })
+
     const priorities = reactive([])
+
     const countTask = computed(() => tasks.length)
-    const addNewTask = () => {
-      const haveBeenAdded = tasks.some(item => item.name === task.value)
-      if(task.value.length < 5){
+
+    const addNewTask = ({id, name, state}) => {
+      const haveBeenAdded = tasks.some(item => item.name === name)
+      if(name.length < 5){
         alert('proud valid task. not accept empty')
-        console.log(task.value)
       }
-      else if(haveBeenAdded === false){
-        tasks.push({name: task.value, status: isChecked.value})
+      else if(!haveBeenAdded){
+        tasks.push({id: id, name: name, state: state})
       }
       else{
         alert('this task already existed. make sure to enter newer')
       }
-      task.value = ""
+      name = ""
     }
+
     const getPriority = (index) => {
-      if (tasks[index].status === false) {
+      if (!tasks[index].status) {
         tasks[index].status = true
-        priorities.push(tasks[index].name)
-      } else if (tasks[index].status === true) {
+        console.log(tasks[index].status)
+        priorities.push({index: priorities.length, name: tasks[index].name})
+      } else {
         tasks[index].status = false
         priorities.splice(index, 1)
+        console.log(tasks[index].status)
       }
+      console.log(tasks[index].status)
     }
+
+    const formatNumber = (number) => {
+      return number < 10 ? `0${number}`: number
+    }
+
     const manageTime = () => {
       const daysOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
       return {
         day: daysOfWeek[new Date().getDay()],
-        date: new Date().getDate(),
+        date: formatNumber(new Date().getDate()),
         month: months[new Date().getMonth()-1],
         year: new Date().getFullYear(),
-        hour: new Date().getHours(),
-        minute: new Date().getMinutes()
+        hour: formatNumber(new Date().getHours()),
+        minute: formatNumber(new Date().getMinutes())
       }
     }
+
+
     const deleteTask = (index) => {
       tasks.splice(index, 1)
       priorities.splice(index, 1)
     }
+
+
+
+
     return{
       tasks, task, countTask, priorities,
-      addNewTask, manageTime, getPriority, deleteTask
+      addNewTask, manageTime, getPriority, deleteTask, formatNumber
     }
   }
 }
